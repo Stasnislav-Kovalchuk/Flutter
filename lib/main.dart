@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'screens/dashboard_screen.dart';
+import 'screens/drive_mode_screen.dart';
 
 void main() {
   runApp(const OffroadVehicleMonitoringApp());
@@ -36,7 +36,7 @@ class OffroadVehicleMonitoringApp extends StatelessWidget {
           ),
         ),
       ),
-      home: const DashboardScreen(),
+      home: const DriveModeScreen(),
     );
   }
 }
