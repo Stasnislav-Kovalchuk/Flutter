@@ -2,6 +2,19 @@
 
 Мінімальний навчальний Flutter-додаток (IoT-тема: керування режимами трансмісії позашляховика), який демонструє роботу з інтерактивним полем вводу, валідацією та динамічним оновленням UI.
 
+### Вимоги лабораторної (чеклист)
+
+- **Flutter проєкт**: так
+- **StatefulWidget**: `DriveModeScreen`
+- **Інтерактивний input**: `TextFormField`
+- **Логіка по вводу**: парсинг режиму + мапінг стану трансмісії
+- **Динамічний UI**: оновлення назви режиму та статусів
+- **Валідація**: дозволені значення + повідомлення про помилки
+- **Помилки**: показ через `TextFormField` validation message
+- **Assets**: `assets/images/tire_bg.jpg` + темний overlay
+- **Лінтер**: `analysis_options.yaml` (flutter_lints)
+- **CI**: `.github/workflows/validation.yaml` (`flutter pub get` / `flutter analyze` / `flutter test`)
+
 ### Функціонал
 
 - **StatefulWidget**: один головний екран `DriveModeScreen`.
