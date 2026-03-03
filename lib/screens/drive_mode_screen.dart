@@ -23,6 +23,72 @@ class DriveState {
   final bool diffLock;
 }
 
+String normalizeDriveModeInput(String raw) => raw.trim().toLowerCase();
+
+DriveMode? parseDriveMode(String raw) {
+  switch (normalizeDriveModeInput(raw)) {
+    case 'sand':
+      return DriveMode.sand;
+    case 'mud':
+      return DriveMode.mud;
+    case 'snow':
+      return DriveMode.snow;
+    case 'mountain':
+      return DriveMode.mountain;
+    case '2wd':
+      return DriveMode.twoWd;
+    default:
+      return null;
+  }
+}
+
+DriveState driveStateFor(DriveMode? mode) {
+  switch (mode) {
+    case DriveMode.sand:
+      return const DriveState(
+        modeName: 'Sand',
+        is4x4: true,
+        lowGear: false,
+        diffLock: false,
+      );
+    case DriveMode.mud:
+      return const DriveState(
+        modeName: 'Mud',
+        is4x4: true,
+        lowGear: true,
+        diffLock: true,
+      );
+    case DriveMode.snow:
+      return const DriveState(
+        modeName: 'Snow',
+        is4x4: true,
+        lowGear: false,
+        diffLock: false,
+      );
+    case DriveMode.mountain:
+      return const DriveState(
+        modeName: 'Mountain',
+        is4x4: true,
+        lowGear: true,
+        diffLock: true,
+      );
+    case DriveMode.twoWd:
+      return const DriveState(
+        modeName: '2WD',
+        is4x4: false,
+        lowGear: false,
+        diffLock: false,
+      );
+    case null:
+      return const DriveState(
+        modeName: '—',
+        is4x4: false,
+        lowGear: false,
+        diffLock: false,
+      );
+  }
+}
+
 class DriveModeScreen extends StatefulWidget {
   const DriveModeScreen({super.key});
 
@@ -42,78 +108,12 @@ class _DriveModeScreenState extends State<DriveModeScreen> {
     super.dispose();
   }
 
-  String _normalize(String raw) => raw.trim().toLowerCase();
-
-  DriveMode? _parseMode(String raw) {
-    switch (_normalize(raw)) {
-      case 'sand':
-        return DriveMode.sand;
-      case 'mud':
-        return DriveMode.mud;
-      case 'snow':
-        return DriveMode.snow;
-      case 'mountain':
-        return DriveMode.mountain;
-      case '2wd':
-        return DriveMode.twoWd;
-      default:
-        return null;
-    }
-  }
-
-  DriveState _stateFor(DriveMode? mode) {
-    switch (mode) {
-      case DriveMode.sand:
-        return const DriveState(
-          modeName: 'Sand',
-          is4x4: true,
-          lowGear: false,
-          diffLock: false,
-        );
-      case DriveMode.mud:
-        return const DriveState(
-          modeName: 'Mud',
-          is4x4: true,
-          lowGear: true,
-          diffLock: true,
-        );
-      case DriveMode.snow:
-        return const DriveState(
-          modeName: 'Snow',
-          is4x4: true,
-          lowGear: false,
-          diffLock: false,
-        );
-      case DriveMode.mountain:
-        return const DriveState(
-          modeName: 'Mountain',
-          is4x4: true,
-          lowGear: true,
-          diffLock: true,
-        );
-      case DriveMode.twoWd:
-        return const DriveState(
-          modeName: '2WD',
-          is4x4: false,
-          lowGear: false,
-          diffLock: false,
-        );
-      case null:
-        return const DriveState(
-          modeName: '—',
-          is4x4: false,
-          lowGear: false,
-          diffLock: false,
-        );
-    }
-  }
-
   String? _validator(String? value) {
-    final input = _normalize(value ?? '');
+    final input = normalizeDriveModeInput(value ?? '');
     if (input.isEmpty) {
       return 'Введіть режим (sand, mud, snow, mountain) або 2wd';
     }
-    if (_parseMode(input) == null) {
+    if (parseDriveMode(input) == null) {
       return 'Невірний режим. Дозволено: sand, mud, snow, mountain, 2wd';
     }
     return null;
@@ -127,7 +127,7 @@ class _DriveModeScreenState extends State<DriveModeScreen> {
 
     if (!formState.validate()) return;
 
-    final mode = _parseMode(_controller.text);
+    final mode = parseDriveMode(_controller.text);
     if (mode == null) return;
 
     setState(() => _activeMode = mode);
@@ -135,7 +135,7 @@ class _DriveModeScreenState extends State<DriveModeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final drive = _stateFor(_activeMode);
+    final drive = driveStateFor(_activeMode);
 
     return Scaffold(
       appBar: AppBar(

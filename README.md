@@ -1,21 +1,37 @@
-## Offroad Vehicle Monitoring System
+## IoT Flutter Lab 1 — Drive Mode Controller
 
-Навчальний Flutter-додаток для лабораторної роботи №1.
+Мінімальний навчальний Flutter-додаток (IoT-тема: керування режимами трансмісії позашляховика), який демонструє роботу з інтерактивним полем вводу, валідацією та динамічним оновленням UI.
 
-Додаток симулює IoT-моніторинг позашляхового автомобіля:
-- ручне введення швидкості (імітація даних сенсорів);
-- попередження про небезпечну швидкість;
-- панель стану сенсорів з випадково згенерованими значеннями.
+### Функціонал
+
+- **StatefulWidget**: один головний екран `DriveModeScreen`.
+- **Інтерактивне поле вводу**: `TextFormField` + кнопка `Apply`.
+- **Валідація**: дозволені значення: `sand`, `mud`, `snow`, `mountain`, `2wd` (без регістру/пробілів).
+- **Логіка на основі вводу**:
+  - `sand` → 4x4 ON, low gear OFF, diff lock OFF
+  - `mud` → 4x4 ON, low gear ON, diff lock ON
+  - `snow` → 4x4 ON, low gear OFF, diff lock OFF
+  - `mountain` → 4x4 ON, low gear ON, diff lock ON
+  - `2wd` → усе OFF
+- **Динамічний UI**: відображає назву режиму та стан 4x4 / low gear / diff lock.
+- **Чистий UI**: фон `assets/images/tire_bg.jpg` + темний overlay.
+- **Лінтер**: `analysis_options.yaml` на базі `flutter_lints`.
+- **CI/Validation**: `.github/workflows/validation.yaml` виконує `flutter pub get`, `flutter analyze`, `flutter test`.
+
+### Структура
+
+```
+lib/
+  main.dart
+  screens/
+    drive_mode_screen.dart
+```
 
 ### Запуск
 
 ```bash
-flutter clean  
-flutter pub get                                      
+flutter pub get
+flutter analyze
+flutter test
 flutter run -d chrome
 ```
-
-
-
-https://github.com/user-attachments/assets/d49a6f39-910d-459f-9846-5081581ff471
-
