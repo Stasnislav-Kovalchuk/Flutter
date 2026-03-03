@@ -53,6 +53,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     });
   }
 
+  
+
   Color get _modeColor {
     switch (_mode) {
       case 'Mud':
