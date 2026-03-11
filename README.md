@@ -1,22 +1,41 @@
-## Offroad Vehicle Monitoring System
+### Offroad Companion – Flutter UI Lab
 
-Навчальний Flutter-додаток для лабораторної роботи №1.
+- **Login**
+  - Поля: email, password
+  - Валідація:
+    - email у валідному форматі;
+    - пароль мінімум 6 символів.
+  - У разі успіху – перехід на
 
-Додаток симулює IoT-моніторинг позашляхового автомобіля:
-- ручне введення швидкості (імітація даних сенсорів);
-- попередження про небезпечну швидкість;
-- панель стану сенсорів з випадково згенерованими значеннями.
+- **Register**
+  - Поля: name, email, password
+  - Валідація:
+    - імʼя не може бути порожнім;
+    - email валідний;
+    - пароль мінімум 6 символів.
+  - У разі успіху – перехід на **Home** та збереження даних користувача в памʼяті додатку.
 
-### Запуск
+- **Home – 4WD Mode Selector (головна фіча)**
+  - Заголовок: **4WD Mode Selector**
+  - Вибір режиму приводу:
+    - `2H` – 2 Wheel Drive High
+    - `4H` – 4 Wheel Drive High
+    - `4L` – 4 Wheel Drive Low
+    - `AUTO`
+
+- **Profile**
+  - Аватар
+  - Імʼя та email користувача (заповнюються з форми реєстрації / логіну)
+  - Кнопка **Logout**, що повертає на екран **Login**.
+
+
+### Запуск проєкту
+
+Переконайся, що встановлено Flutter SDK, потім виконай у корені проєкту:
 
 ```bash
-flutter clean  
-flutter pub get                                      
+flutter clean
+flutter pub get
 flutter run -d chrome
 ```
 
-
-
-https://github.com/user-attachments/assets/d49a6f39-910d-459f-9846-5081581ff471
-
-<img width="1382" height="1078" alt="image" src="https://github.com/user-attachments/assets/8dc51792-2d73-465b-82ec-e04762297a8d" />
