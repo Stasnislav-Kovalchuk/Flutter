@@ -106,13 +106,6 @@ class HomeScreen extends StatelessWidget {
                 ],
               ),
             ),
-            SizedBox(height: size.height * 0.02),
-            CustomButton(
-              text: 'Go to Profile',
-              onPressed: () {
-                Navigator.pushNamed(context, '/profile');
-              },
-            ),
           ],
         ),
       ),
@@ -144,9 +137,8 @@ class _ModeCard extends StatelessWidget {
           color: selected ? colorScheme.primary : const Color(0xFF151A24),
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: selected
-                ? Colors.white.withOpacity(0.9)
-                : Colors.grey.shade700,
+            color:
+                selected ? Colors.white.withOpacity(0.9) : Colors.grey.shade700,
             width: selected ? 2 : 1,
           ),
           boxShadow: selected
