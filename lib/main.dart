@@ -1,13 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-import 'screens/dashboard_screen.dart';
+import 'features/auth/data/user_repository_prefs.dart';
+import 'features/auth/presentation/login_screen.dart';
+import 'features/home/presentation/home_screen.dart';
 
-void main() {
-  runApp(const OffroadVehicleMonitoringApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final prefs = await SharedPreferences.getInstance();
+  final userRepository = SharedPrefsUserRepository(prefs);
+
+  runApp(
+    OffroadVehicleMonitoringApp(
+      userRepository: userRepository,
+    ),
+  );
 }
 
 class OffroadVehicleMonitoringApp extends StatelessWidget {
-  const OffroadVehicleMonitoringApp({super.key});
+  const OffroadVehicleMonitoringApp({
+    super.key,
+    required this.userRepository,
+  });
+
+  final SharedPrefsUserRepository userRepository;
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +52,24 @@ class OffroadVehicleMonitoringApp extends StatelessWidget {
           ),
         ),
       ),
-      home: const DashboardScreen(),
+      home: FutureBuilder<bool>(
+        future: userRepository.isLoggedIn(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return const Scaffold(
+              body: Center(
+                child: CircularProgressIndicator(),
+              ),
+            );
+          }
+
+          final isLoggedIn = snapshot.data ?? false;
+          if (isLoggedIn) {
+            return HomeScreen(userRepository: userRepository);
+          }
+          return LoginScreen(userRepository: userRepository);
+        },
+      ),
     );
   }
 }
