@@ -75,7 +75,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFF111116),
       appBar: AppBar(
-        title: const Text('IoT Drive Mode Lab 1'),
+        title: const Text('IoT Drive Mode'),
         centerTitle: true,
         backgroundColor: const Color(0xFF1A1A22),
       ),
