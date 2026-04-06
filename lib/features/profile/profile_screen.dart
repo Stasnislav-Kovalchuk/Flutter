@@ -1,16 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../core/entities/user.dart';
 import '../../core/repositories/auth_repository.dart';
 import '../auth/presentation/login_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({
-    required this.authRepository,
-    super.key,
-  });
-
-  final AuthRepository authRepository;
+  const ProfileScreen({super.key});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -37,13 +33,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _loadUser() async {
+    final AuthRepository repo = context.read<AuthRepository>();
     try {
-      final User? user = await widget.authRepository.getCurrentUser();
+      final User? user = await repo.getCurrentUser();
       if (user != null) {
         _emailController.text = user.email;
         _nameController.text = user.name;
       }
-    } catch (e) {
+    } on Object catch (e) {
       _error = e.toString();
     } finally {
       if (mounted) {
@@ -72,14 +69,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final User user = User(email: email, name: name);
 
     try {
-      await widget.authRepository.updateUser(user);
+      await context.read<AuthRepository>().updateUser(user);
       if (!mounted) {
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Профіль збережено')),
       );
-    } catch (e) {
+    } on Object catch (e) {
       setState(() {
         _error = e.toString();
       });
@@ -87,30 +84,53 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _onLogoutPressed() async {
-    await widget.authRepository.logout();
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Вийти з акаунта?'),
+          content: const Text(
+            'Сесію буде завершено на цьому пристрої. '
+            'Потрібно буде увійти знову.',
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Скасувати'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Вийти'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true || !mounted) {
+      return;
+    }
+
+    await context.read<AuthRepository>().logout();
     if (!mounted) {
       return;
     }
     Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute<LoginScreen>(
-        builder: (BuildContext context) => LoginScreen(
-          authRepository: widget.authRepository,
-        ),
+      MaterialPageRoute<void>(
+        builder: (BuildContext context) => const LoginScreen(),
       ),
       (Route<dynamic> route) => false,
     );
   }
 
   Future<void> _onDeletePressed() async {
-    await widget.authRepository.deleteAccount();
+    await context.read<AuthRepository>().deleteAccount();
     if (!mounted) {
       return;
     }
     Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute<LoginScreen>(
-        builder: (BuildContext context) => LoginScreen(
-          authRepository: widget.authRepository,
-        ),
+      MaterialPageRoute<void>(
+        builder: (BuildContext context) => const LoginScreen(),
       ),
       (Route<dynamic> route) => false,
     );
@@ -211,4 +231,3 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 }
-
