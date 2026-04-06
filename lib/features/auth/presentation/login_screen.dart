@@ -1,16 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../../core/repositories/auth_repository.dart';
+import '../../../core/services/connectivity_notifier.dart';
 import '../../home/home_screen.dart';
 import 'registration_screen.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({
-    required this.authRepository,
-    super.key,
-  });
-
-  final AuthRepository authRepository;
+  const LoginScreen({super.key});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -41,24 +38,37 @@ class _LoginScreenState extends State<LoginScreen> {
       _error = null;
     });
 
+    final AuthRepository auth = context.read<AuthRepository>();
+    final bool online = await ConnectivityNotifier.checkOnline();
+    if (!mounted) {
+      return;
+    }
+    if (!online) {
+      setState(() {
+        _isLoading = false;
+        _error = 'Немає з\'єднання з Інтернетом. Перевірте мережу.';
+      });
+      return;
+    }
+
     try {
-      await widget.authRepository.login(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
-      );
+      await auth.login(
+            email: _emailController.text.trim(),
+            password: _passwordController.text.trim(),
+          );
 
       if (!mounted) {
         return;
       }
 
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute<HomeScreen>(
-          builder: (BuildContext context) => HomeScreen(
-            authRepository: widget.authRepository,
+        MaterialPageRoute<void>(
+          builder: (BuildContext context) => const HomeScreen(
+            launchedOffline: false,
           ),
         ),
       );
-    } catch (e) {
+    } on Object catch (e) {
       setState(() {
         _error = e.toString();
       });
@@ -73,10 +83,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _onRegisterPressed() {
     Navigator.of(context).push(
-      MaterialPageRoute<RegistrationScreen>(
-        builder: (BuildContext context) => RegistrationScreen(
-          authRepository: widget.authRepository,
-        ),
+      MaterialPageRoute<void>(
+        builder: (BuildContext context) => const RegistrationScreen(),
       ),
     );
   }
@@ -199,4 +207,3 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
-

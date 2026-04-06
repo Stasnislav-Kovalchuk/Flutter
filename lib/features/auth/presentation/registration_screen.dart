@@ -1,15 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../../core/repositories/auth_repository.dart';
+import '../../../core/services/connectivity_notifier.dart';
 import '../../home/home_screen.dart';
 
 class RegistrationScreen extends StatefulWidget {
-  const RegistrationScreen({
-    required this.authRepository,
-    super.key,
-  });
-
-  final AuthRepository authRepository;
+  const RegistrationScreen({super.key});
 
   @override
   State<RegistrationScreen> createState() => _RegistrationScreenState();
@@ -77,26 +74,39 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       _error = null;
     });
 
+    final AuthRepository auth = context.read<AuthRepository>();
+    final bool online = await ConnectivityNotifier.checkOnline();
+    if (!mounted) {
+      return;
+    }
+    if (!online) {
+      setState(() {
+        _isLoading = false;
+        _error = 'Немає з\'єднання з Інтернетом. Реєстрація недоступна.';
+      });
+      return;
+    }
+
     try {
-      await widget.authRepository.register(
-        email: _emailController.text.trim(),
-        name: _nameController.text.trim(),
-        password: _passwordController.text.trim(),
-      );
+      await auth.register(
+            email: _emailController.text.trim(),
+            name: _nameController.text.trim(),
+            password: _passwordController.text.trim(),
+          );
 
       if (!mounted) {
         return;
       }
 
       Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute<HomeScreen>(
-          builder: (BuildContext context) => HomeScreen(
-            authRepository: widget.authRepository,
+        MaterialPageRoute<void>(
+          builder: (BuildContext context) => const HomeScreen(
+            launchedOffline: false,
           ),
         ),
         (Route<dynamic> route) => false,
       );
-    } catch (e) {
+    } on Object catch (e) {
       setState(() {
         _error = e.toString();
       });
@@ -210,4 +220,3 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     );
   }
 }
-
