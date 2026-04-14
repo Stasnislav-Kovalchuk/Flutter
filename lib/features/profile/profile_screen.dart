@@ -3,7 +3,9 @@ import 'package:provider/provider.dart';
 
 import '../../core/entities/user.dart';
 import '../../core/repositories/auth_repository.dart';
-import '../auth/presentation/login_screen.dart';
+import 'profile_dialogs.dart';
+import 'profile_form_card.dart';
+import 'profile_navigation.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -84,30 +86,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _onLogoutPressed() async {
-    final bool? confirmed = await showDialog<bool>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Вийти з акаунта?'),
-          content: const Text(
-            'Сесію буде завершено на цьому пристрої. '
-            'Потрібно буде увійти знову.',
-          ),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Скасувати'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Вийти'),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (confirmed != true || !mounted) {
+    final bool confirmed = await confirmLogout(context);
+    if (!confirmed || !mounted) {
       return;
     }
 
@@ -115,12 +95,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (!mounted) {
       return;
     }
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute<void>(
-        builder: (BuildContext context) => const LoginScreen(),
-      ),
-      (Route<dynamic> route) => false,
-    );
+    goToLoginAndClearStack(context);
   }
 
   Future<void> _onDeletePressed() async {
@@ -128,12 +103,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (!mounted) {
       return;
     }
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute<void>(
-        builder: (BuildContext context) => const LoginScreen(),
-      ),
-      (Route<dynamic> route) => false,
-    );
+    goToLoginAndClearStack(context);
   }
 
   @override
@@ -153,77 +123,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: Center(
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 420),
-                  child: Card(
-                    color: const Color(0xFF1A1A22),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: <Widget>[
-                          const Text(
-                            'Дані користувача',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-                          TextField(
-                            controller: _emailController,
-                            style: const TextStyle(color: Colors.white),
-                            decoration: const InputDecoration(
-                              labelText: 'Email',
-                              labelStyle: TextStyle(color: Colors.grey),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          TextField(
-                            controller: _nameController,
-                            style: const TextStyle(color: Colors.white),
-                            decoration: const InputDecoration(
-                              labelText: 'Імʼя',
-                              labelStyle: TextStyle(color: Colors.grey),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          if (_error != null)
-                            Text(
-                              _error!,
-                              style: const TextStyle(
-                                color: Colors.redAccent,
-                              ),
-                            ),
-                          const SizedBox(height: 16),
-                          ElevatedButton(
-                            onPressed: _onSavePressed,
-                            child: const Text('Зберегти'),
-                          ),
-                          const SizedBox(height: 8),
-                          ElevatedButton(
-                            onPressed: _onLogoutPressed,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.grey,
-                              foregroundColor: Colors.white,
-                            ),
-                            child: const Text('Вийти'),
-                          ),
-                          const SizedBox(height: 8),
-                          TextButton(
-                            onPressed: _onDeletePressed,
-                            style: TextButton.styleFrom(
-                              foregroundColor: Colors.redAccent,
-                            ),
-                            child: const Text('Видалити акаунт'),
-                          ),
-                        ],
-                      ),
-                    ),
+                  child: ProfileFormCard(
+                    emailController: _emailController,
+                    nameController: _nameController,
+                    error: _error,
+                    onSavePressed: _onSavePressed,
+                    onLogoutPressed: _onLogoutPressed,
+                    onDeletePressed: _onDeletePressed,
                   ),
                 ),
               ),
