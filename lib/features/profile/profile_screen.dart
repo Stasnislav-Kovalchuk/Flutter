@@ -1,140 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../core/entities/user.dart';
-import '../../core/repositories/auth_repository.dart';
+import '../../application/cubits/auth/auth_cubit.dart';
+import '../../application/cubits/profile/profile_cubit.dart';
 import '../auth/presentation/login_screen.dart';
 
-class ProfileScreen extends StatefulWidget {
+class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
-
-  @override
-  State<ProfileScreen> createState() => _ProfileScreenState();
-}
-
-class _ProfileScreenState extends State<ProfileScreen> {
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _nameController = TextEditingController();
-
-  bool _isLoading = true;
-  String? _error;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadUser();
-  }
-
-  @override
-  void dispose() {
-    _emailController.dispose();
-    _nameController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _loadUser() async {
-    final AuthRepository repo = context.read<AuthRepository>();
-    try {
-      final User? user = await repo.getCurrentUser();
-      if (user != null) {
-        _emailController.text = user.email;
-        _nameController.text = user.name;
-      }
-    } on Object catch (e) {
-      _error = e.toString();
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
-  Future<void> _onSavePressed() async {
-    setState(() {
-      _error = null;
-    });
-
-    final String email = _emailController.text.trim();
-    final String name = _nameController.text.trim();
-
-    if (email.isEmpty || name.isEmpty) {
-      setState(() {
-        _error = 'Email та імʼя не можуть бути порожніми';
-      });
-      return;
-    }
-
-    final User user = User(email: email, name: name);
-
-    try {
-      await context.read<AuthRepository>().updateUser(user);
-      if (!mounted) {
-        return;
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Профіль збережено')),
-      );
-    } on Object catch (e) {
-      setState(() {
-        _error = e.toString();
-      });
-    }
-  }
-
-  Future<void> _onLogoutPressed() async {
-    final bool? confirmed = await showDialog<bool>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Вийти з акаунта?'),
-          content: const Text(
-            'Сесію буде завершено на цьому пристрої. '
-            'Потрібно буде увійти знову.',
-          ),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Скасувати'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Вийти'),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (confirmed != true || !mounted) {
-      return;
-    }
-
-    await context.read<AuthRepository>().logout();
-    if (!mounted) {
-      return;
-    }
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute<void>(
-        builder: (BuildContext context) => const LoginScreen(),
-      ),
-      (Route<dynamic> route) => false,
-    );
-  }
-
-  Future<void> _onDeletePressed() async {
-    await context.read<AuthRepository>().deleteAccount();
-    if (!mounted) {
-      return;
-    }
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute<void>(
-        builder: (BuildContext context) => const LoginScreen(),
-      ),
-      (Route<dynamic> route) => false,
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -144,11 +16,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
         title: const Text('Профіль'),
         backgroundColor: const Color(0xFF181820),
       ),
-      body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(),
-            )
-          : Padding(
+      body: BlocListener<AuthCubit, AuthState>(
+        listener: (BuildContext context, AuthState state) {
+          if (state is AuthLogoutSuccess) {
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute<void>(builder: (_) => const LoginScreen()),
+              (Route<dynamic> route) => false,
+            );
+          }
+        },
+        child: BlocBuilder<ProfileCubit, ProfileState>(
+          builder: (BuildContext context, ProfileState state) {
+            return Padding(
               padding: const EdgeInsets.all(24),
               child: Center(
                 child: ConstrainedBox(
@@ -160,74 +39,108 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     child: Padding(
                       padding: const EdgeInsets.all(24),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: <Widget>[
-                          const Text(
-                            'Дані користувача',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-                          TextField(
-                            controller: _emailController,
-                            style: const TextStyle(color: Colors.white),
-                            decoration: const InputDecoration(
-                              labelText: 'Email',
-                              labelStyle: TextStyle(color: Colors.grey),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          TextField(
-                            controller: _nameController,
-                            style: const TextStyle(color: Colors.white),
-                            decoration: const InputDecoration(
-                              labelText: 'Імʼя',
-                              labelStyle: TextStyle(color: Colors.grey),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          if (_error != null)
-                            Text(
-                              _error!,
-                              style: const TextStyle(
-                                color: Colors.redAccent,
-                              ),
-                            ),
-                          const SizedBox(height: 16),
-                          ElevatedButton(
-                            onPressed: _onSavePressed,
-                            child: const Text('Зберегти'),
-                          ),
-                          const SizedBox(height: 8),
-                          ElevatedButton(
-                            onPressed: _onLogoutPressed,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.grey,
-                              foregroundColor: Colors.white,
-                            ),
-                            child: const Text('Вийти'),
-                          ),
-                          const SizedBox(height: 8),
-                          TextButton(
-                            onPressed: _onDeletePressed,
-                            style: TextButton.styleFrom(
-                              foregroundColor: Colors.redAccent,
-                            ),
-                            child: const Text('Видалити акаунт'),
-                          ),
-                        ],
-                      ),
+                      child: _buildContent(context, state),
                     ),
                   ),
                 ),
               ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildContent(BuildContext context, ProfileState state) {
+    if (state is ProfileLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (state is ProfileError) {
+      return Center(
+        child: Text(
+          state.message,
+          style: const TextStyle(color: Colors.redAccent),
+        ),
+      );
+    }
+
+    if (state is ProfileLoaded) {
+      final user = state.user;
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          const Text(
+            'Дані користувача',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
             ),
+          ),
+          const SizedBox(height: 24),
+          TextField(
+            readOnly: true,
+            style: const TextStyle(color: Colors.white70),
+            decoration: InputDecoration(
+              labelText: 'Email',
+              labelStyle: const TextStyle(color: Colors.grey),
+              hintText: user.email,
+              hintStyle: const TextStyle(color: Colors.white),
+            ),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            readOnly: true,
+            style: const TextStyle(color: Colors.white70),
+            decoration: InputDecoration(
+              labelText: 'Імʼя',
+              labelStyle: const TextStyle(color: Colors.grey),
+              hintText: user.name,
+              hintStyle: const TextStyle(color: Colors.white),
+            ),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton(
+            onPressed: () => _showLogoutDialog(context),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.grey,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Вийти'),
+          ),
+        ],
+      );
+    }
+
+    return const Center(child: Text('Завантажуємо профіль...'));
+  }
+
+  void _showLogoutDialog(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        title: const Text('Вийти з акаунта?'),
+        content: const Text(
+          'Сесію буде завершено на цьому пристрої. '
+          'Потрібно буде увійти знову.',
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Скасувати'),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              context.read<AuthCubit>().logout();
+            },
+            child: const Text('Вийти'),
+          ),
+        ],
+      ),
     );
   }
 }
