@@ -125,16 +125,30 @@ lib/
 
 ```bash
 flutter analyze
-```
 
----
+## Lab 6 — Звіт (Рефакторинг state management)
 
-## Навчальний контекст
+Мета: рефакторинг менеджменту стану додатку до архітектурно-коректного підходу (Cubits), перенести API-виклики у шари стану, зменшити використання `StatefulWidget` там, де це не потрібно, зберегти поведінку автологіну/офлайн та дотриматись `flutter_lints`.
 
-Проєкт відповідає вимогам лабораторної з тем: **async/await**, **Stream** (мережа, MQTT), **Provider**, **плагіни** (MQTT, connectivity, secure storage), сценарії **логін / автологін / офлайн / вихід**.
+- Основні зміни:
+	- Додано `flutter_bloc` і впроваджено Cubit-архітектуру: `AuthCubit`, `DashboardCubit`, `MqttCubit`, `ProfileCubit` (див. [lib/application/cubits](lib/application/cubits)).
+	- DI та провайдери винесені в `AppRoot` — репозиторії через [lib/app/app_root.dart](lib/app/app_root.dart), сервіси-спостерігачі (`ConnectivityNotifier`, `MqttSensorController`) надаються через `ChangeNotifierProvider`.
+	- UI: `Login`, `Registration`, `Dashboard`, `Profile` переписані для роботи з Cubit'ами (перехід до `StatelessWidget` там, де можливо).
+	- Локальне сховище: `flutter_secure_storage` + `SharedPreferences` (fallback для Keychain), реалізовано в [lib/data/storage/local_auth_repository.dart](lib/data/storage/local_auth_repository.dart).
 
----
+- Як перевірити локально:
+	```bash
+	flutter clean
+	flutter pub get
+	flutter analyze   # має повернути "No issues found!"
+	flutter run -d macos
+	```
 
-## Ліцензія
+- Де дивитись зміни (головні файли):
+	- [lib/app/app_root.dart](lib/app/app_root.dart)
+	- [lib/application/cubits/auth/auth_cubit.dart](lib/application/cubits/auth/auth_cubit.dart)
+	- [lib/application/cubits/mqtt/mqtt_cubit.dart](lib/application/cubits/mqtt/mqtt_cubit.dart)
+	- [lib/application/cubits/dashboard/dashboard_cubit.dart](lib/application/cubits/dashboard/dashboard_cubit.dart)
+	- [lib/application/cubits/profile/profile_cubit.dart](lib/application/cubits/profile/profile_cubit.dart)
 
-Навчальний проєкт; уточніть умови з викладачем або власником репозиторію.
+- Статус: реалізація Lab6 завершена у гілці `lab6`; є відкритий PR: https://github.com/Stasnislav-Kovalchuk/Flutter/pull/5
