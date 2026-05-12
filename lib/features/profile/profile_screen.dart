@@ -1,12 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../application/cubits/auth/auth_cubit.dart';
 import '../../application/cubits/profile/profile_cubit.dart';
+import '../../core/entities/user.dart';
 import '../auth/presentation/login_screen.dart';
+import 'profile_dialogs.dart';
+import 'profile_form.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  late final TextEditingController _emailController;
+  late final TextEditingController _nameController;
+
+  @override
+  void initState() {
+    super.initState();
+    _emailController = TextEditingController();
+    _nameController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _nameController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -16,9 +40,17 @@ class ProfileScreen extends StatelessWidget {
         title: const Text('Профіль'),
         backgroundColor: const Color(0xFF181820),
       ),
-      body: BlocListener<AuthCubit, AuthState>(
-        listener: (BuildContext context, AuthState state) {
-          if (state is AuthLogoutSuccess) {
+      body: BlocListener<ProfileCubit, ProfileState>(
+        listener: (context, state) {
+          if (state is ProfileLoaded) {
+            _emailController.text = state.user.email;
+            _nameController.text = state.user.name;
+          }
+          if (state is ProfileSaved) {
+            ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Профіль збережено')));
+          }
+          if (state is ProfileLoggedOut || state is ProfileDeleted) {
             Navigator.of(context).pushAndRemoveUntil(
               MaterialPageRoute<void>(builder: (_) => const LoginScreen()),
               (Route<dynamic> route) => false,
@@ -26,22 +58,28 @@ class ProfileScreen extends StatelessWidget {
           }
         },
         child: BlocBuilder<ProfileCubit, ProfileState>(
-          builder: (BuildContext context, ProfileState state) {
+          builder: (context, state) {
+            if (state is ProfileLoading) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (state is ProfileError) {
+              return Center(
+                child: Text(
+                  state.message,
+                  style: const TextStyle(color: Colors.redAccent),
+                ),
+              );
+            }
+
             return Padding(
               padding: const EdgeInsets.all(24),
               child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 420),
-                  child: Card(
-                    color: const Color(0xFF1A1A22),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: _buildContent(context, state),
-                    ),
-                  ),
+                child: ProfileForm(
+                  emailController: _emailController,
+                  nameController: _nameController,
+                  onSave: () => _onSavePressed(context),
+                  onLogout: () => _showLogoutDialog(context),
+                  onDelete: () => _showDeleteDialog(context),
                 ),
               ),
             );
@@ -51,96 +89,24 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildContent(BuildContext context, ProfileState state) {
-    if (state is ProfileLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    if (state is ProfileError) {
-      return Center(
-        child: Text(
-          state.message,
-          style: const TextStyle(color: Colors.redAccent),
-        ),
+  void _onSavePressed(BuildContext context) {
+    final String email = _emailController.text.trim();
+    final String name = _nameController.text.trim();
+    if (email.isEmpty || name.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Email та імʼя не можуть бути порожніми')),
       );
+      return;
     }
-
-    if (state is ProfileLoaded) {
-      final user = state.user;
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          const Text(
-            'Дані користувача',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 24),
-          TextField(
-            readOnly: true,
-            style: const TextStyle(color: Colors.white70),
-            decoration: InputDecoration(
-              labelText: 'Email',
-              labelStyle: const TextStyle(color: Colors.grey),
-              hintText: user.email,
-              hintStyle: const TextStyle(color: Colors.white),
-            ),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            readOnly: true,
-            style: const TextStyle(color: Colors.white70),
-            decoration: InputDecoration(
-              labelText: 'Імʼя',
-              labelStyle: const TextStyle(color: Colors.grey),
-              hintText: user.name,
-              hintStyle: const TextStyle(color: Colors.white),
-            ),
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton(
-            onPressed: () => _showLogoutDialog(context),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.grey,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Вийти'),
-          ),
-        ],
-      );
-    }
-
-    return const Center(child: Text('Завантажуємо профіль...'));
+    final user = User(email: email, name: name);
+    context.read<ProfileCubit>().updateUser(user);
   }
 
   void _showLogoutDialog(BuildContext context) {
-    showDialog<void>(
-      context: context,
-      builder: (BuildContext context) => AlertDialog(
-        title: const Text('Вийти з акаунта?'),
-        content: const Text(
-          'Сесію буде завершено на цьому пристрої. '
-          'Потрібно буде увійти знову.',
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Скасувати'),
-          ),
-          FilledButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              context.read<AuthCubit>().logout();
-            },
-            child: const Text('Вийти'),
-          ),
-        ],
-      ),
-    );
+    showLogoutDialog(context);
+  }
+
+  void _showDeleteDialog(BuildContext context) {
+    showDeleteDialog(context);
   }
 }

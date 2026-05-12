@@ -23,3 +23,15 @@ final class ProfileError extends ProfileState {
 
   final String message;
 }
+
+final class ProfileSaved extends ProfileState {
+  const ProfileSaved();
+}
+
+final class ProfileLoggedOut extends ProfileState {
+  const ProfileLoggedOut();
+}
+
+final class ProfileDeleted extends ProfileState {
+  const ProfileDeleted();
+}

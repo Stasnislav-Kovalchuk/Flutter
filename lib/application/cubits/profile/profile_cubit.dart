@@ -24,4 +24,35 @@ class ProfileCubit extends Cubit<ProfileState> {
       emit(ProfileError(e.toString()));
     }
   }
+
+  Future<void> updateUser(User user) async {
+    emit(const ProfileLoading());
+    try {
+      await _authRepository.updateUser(user);
+      emit(ProfileLoaded(user: user));
+      emit(const ProfileSaved());
+    } on Object catch (e) {
+      emit(ProfileError(e.toString()));
+    }
+  }
+
+  Future<void> logout() async {
+    emit(const ProfileLoading());
+    try {
+      await _authRepository.logout();
+      emit(const ProfileLoggedOut());
+    } on Object catch (e) {
+      emit(ProfileError(e.toString()));
+    }
+  }
+
+  Future<void> deleteAccount() async {
+    emit(const ProfileLoading());
+    try {
+      await _authRepository.deleteAccount();
+      emit(const ProfileDeleted());
+    } on Object catch (e) {
+      emit(ProfileError(e.toString()));
+    }
+  }
 }
