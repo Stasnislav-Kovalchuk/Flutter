@@ -1,4 +1,4 @@
-import 'package:bloc/bloc.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'simple_counter_state.dart';
 
 /// Very small Cubit example used as a template.

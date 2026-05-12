@@ -1,0 +1,17 @@
+name: my_torch_plugin
+description: A small plugin to toggle device flashlight (Android implementation).
+version: 0.0.1
+homepage: https://github.com/<your-username>/my_torch_plugin
+
+environment:
+  sdk: '>=2.18.0 <4.0.0'
+
+  plugin:
+    platforms:
+      android:
+        package: com.example.my_torch_plugin
+        pluginClass: MyTorchPlugin
+
+dependencies:
+  flutter:
+    sdk: flutter
