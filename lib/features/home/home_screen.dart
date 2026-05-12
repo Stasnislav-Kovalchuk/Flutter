@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../core/plugins/my_torch_shim.dart';
 
 import '../../application/cubits/home/home_cubit.dart';
 import '../../core/services/connectivity_notifier.dart';
@@ -45,6 +46,12 @@ class HomeScreen extends StatelessWidget {
 
             return Scaffold(
               body: pages[state.currentIndex],
+              floatingActionButton: FloatingActionButton(
+                onPressed: () async {
+                  await MyNewPlugin.onLight(context: context);
+                },
+                child: const Icon(Icons.flash_on),
+              ),
               bottomNavigationBar: BottomNavigationBar(
                 currentIndex: state.currentIndex,
                 backgroundColor: const Color(0xFF181820),
