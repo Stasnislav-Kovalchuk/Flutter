@@ -1,18 +1,34 @@
 import 'dart:convert';
 
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/entities/user.dart';
 import '../../core/repositories/auth_repository.dart';
+import 'session_token_store.dart';
 
 class LocalAuthRepository implements AuthRepository {
-  LocalAuthRepository(this._prefs);
+  LocalAuthRepository(this._prefs, FlutterSecureStorage secureStorage)
+      : _tokenStore = SessionTokenStore(_prefs, secureStorage);
 
   static const String _userKey = 'user';
   static const String _passwordKey = 'password';
   static const String _loggedInKey = 'logged_in';
 
   final SharedPreferences _prefs;
+  final SessionTokenStore _tokenStore;
+
+  /// Міграція зі старих збірок: був лише прапорець у SharedPreferences.
+  Future<void> _migrateSessionIfNeeded() async {
+    final bool loggedIn = _prefs.getBool(_loggedInKey) ?? false;
+    if (!loggedIn) {
+      return;
+    }
+    final String? token = await _tokenStore.read();
+    if (token == null || token.isEmpty) {
+      await _tokenStore.writeNew();
+    }
+  }
 
   @override
   Future<void> register({
@@ -24,6 +40,7 @@ class LocalAuthRepository implements AuthRepository {
     await _prefs.setString(_userKey, jsonEncode(user.toJson()));
     await _prefs.setString(_passwordKey, password);
     await _prefs.setBool(_loggedInKey, true);
+    await _tokenStore.writeNew();
   }
 
   @override
@@ -42,11 +59,13 @@ class LocalAuthRepository implements AuthRepository {
     }
 
     await _prefs.setBool(_loggedInKey, true);
+    await _tokenStore.writeNew();
   }
 
   @override
   Future<void> logout() async {
     await _prefs.setBool(_loggedInKey, false);
+    await _tokenStore.clear();
   }
 
   @override
@@ -66,7 +85,13 @@ class LocalAuthRepository implements AuthRepository {
 
   @override
   Future<bool> isLoggedIn() async {
-    return _prefs.getBool(_loggedInKey) ?? false;
+    final bool flag = _prefs.getBool(_loggedInKey) ?? false;
+    if (!flag) {
+      return false;
+    }
+    await _migrateSessionIfNeeded();
+    final String? token = await _tokenStore.read();
+    return token != null && token.isNotEmpty;
   }
 
   @override
@@ -79,6 +104,6 @@ class LocalAuthRepository implements AuthRepository {
     await _prefs.remove(_userKey);
     await _prefs.remove(_passwordKey);
     await _prefs.remove(_loggedInKey);
+    await _tokenStore.clear();
   }
 }
-
