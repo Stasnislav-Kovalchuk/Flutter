@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:provider/provider.dart';
 
 import '../application/cubits/auth/auth_cubit.dart';
 import '../application/cubits/dashboard/dashboard_cubit.dart';
@@ -27,25 +28,30 @@ class AppRoot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiRepositoryProvider(
+    return MultiProvider(
       providers: [
-        RepositoryProvider<AuthRepository>.value(value: authRepository),
-        RepositoryProvider<ConnectivityNotifier>.value(
+        ChangeNotifierProvider<ConnectivityNotifier>.value(
             value: connectivityNotifier),
-        RepositoryProvider<MqttSensorController>.value(value: mqttController),
+        ChangeNotifierProvider<MqttSensorController>.value(
+            value: mqttController),
       ],
-      child: MultiBlocProvider(
+      child: MultiRepositoryProvider(
         providers: [
-          BlocProvider<AuthCubit>(create: (_) => AuthCubit(authRepository)),
-          BlocProvider<DashboardCubit>(
-              create: (_) => DashboardCubit(mqttController)),
-          BlocProvider<MqttCubit>(
-            create: (_) => MqttCubit(mqttController, connectivityNotifier),
-          ),
-          BlocProvider<ProfileCubit>(
-              create: (_) => ProfileCubit(authRepository)),
+          RepositoryProvider<AuthRepository>.value(value: authRepository),
         ],
-        child: OffroadVehicleMonitoringApp(bootstrapFuture: bootstrapFuture),
+        child: MultiBlocProvider(
+          providers: [
+            BlocProvider<AuthCubit>(create: (_) => AuthCubit(authRepository)),
+            BlocProvider<DashboardCubit>(
+                create: (_) => DashboardCubit(mqttController)),
+            BlocProvider<MqttCubit>(
+              create: (_) => MqttCubit(mqttController, connectivityNotifier),
+            ),
+            BlocProvider<ProfileCubit>(
+                create: (_) => ProfileCubit(authRepository)),
+          ],
+          child: OffroadVehicleMonitoringApp(bootstrapFuture: bootstrapFuture),
+        ),
       ),
     );
   }
